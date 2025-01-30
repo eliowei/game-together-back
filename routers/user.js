@@ -18,6 +18,8 @@ router.patch('/refresh', auth.jwt, user.refresh)
 router.delete('/logout', auth.jwt, user.logout)
 // 取得所有使用者
 router.get('/all', auth.jwt, auth.admin, user.getAll)
+// 刪除
+router.delete('/:id', auth.jwt, auth.admin, user.remove)
 
 // 以Token，查詢主辦揪團
 router.get('/organizerGroup', auth.jwt, user.getOrganizerGroup)

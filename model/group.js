@@ -60,15 +60,35 @@ const Group = new Schema(
       required: [true, 'contactInfoRequired'],
       minlength: [1, 'contactInfominLength'],
     },
+    city: {
+      type: String,
+      validator: {
+        validator(value) {
+          return this.type !== 'offline' || (value && value.length > 0)
+        },
+      },
+      message: 'cityRequired',
+      default: '無',
+    },
     region: {
       type: String,
-      required: [true, 'regionRequired'],
-      default: '無',
+      validator: {
+        validator(value) {
+          return this.type !== 'offline' || (value && value.length > 0)
+        },
+        message: 'regionRequired',
+        default: '無',
+      },
     },
     address: {
       type: String,
-      required: [true, 'addressRequired'],
-      default: '無',
+      validator: {
+        validator(value) {
+          return this.type !== 'offline' || (value && value.length > 0)
+        },
+        message: 'addressRequired',
+        default: '無',
+      },
     },
     tags: {
       type: [String],

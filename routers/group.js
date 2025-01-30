@@ -11,7 +11,7 @@ router.get('/all', auth.jwt, group.getAll)
 // 取得指定的揪團
 router.get('/:id', group.getId)
 // 編輯揪團
-router.patch('/:id', upload, auth.admin, group.edit)
+router.patch('/:id', auth.jwt, auth.admin, upload, group.edit)
 // 刪除揪團
 router.delete('/:id', auth.jwt, auth.admin, group.remove)
 

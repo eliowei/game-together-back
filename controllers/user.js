@@ -70,6 +70,7 @@ export const profile = async (req, res) => {
       email: req.user.email,
       account: req.user.account,
       role: req.user.role,
+      tags: req.user.tags,
     },
   })
 }
@@ -170,6 +171,46 @@ export const getAll = async (req, res) => {
       success: false,
       message: 'serverError',
     })
+  }
+}
+
+// 刪除會員
+export const remove = async (req, res) => {
+  try {
+    if (!validator.isMongoId(req.params.id)) throw new Error('ID')
+
+    // 1.找到要刪除的揪團
+    const result = await User.findById(req.params.id).orFail(new Error('NOT FOUND'))
+
+    res.status(StatusCodes.OK).json({
+      success: true,
+      message: '',
+      result,
+    })
+  } catch (error) {
+    console.log(error)
+
+    if (error.name === 'CastError' || error.message === 'ID') {
+      res.status(StatusCodes.BAD_REQUEST).json({
+        sucess: false,
+        message: 'idInvalid',
+      })
+    } else if (error.message === 'NOT FOUND') {
+      res.status(StatusCodes.NOT_FOUND).json({
+        success: false,
+        message: 'notFound',
+      })
+    } else if (error.message === 'NOT ORGANIZER') {
+      res.status(StatusCodes.FORBIDDEN).json({
+        sucess: false,
+        message: 'notOrganizer',
+      })
+    } else {
+      res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+        success: false,
+        message: 'serverError',
+      })
+    }
   }
 }
 
