@@ -6,20 +6,24 @@ import Chat from '../model/chat.js'
 
 export const create = async (req, res) => {
   try {
-    // 設定主辦者ID
-    req.body.organizer_id = req.user._id
+    const organizerId = req.body.organizer_id || req.user._id
+
+    // 驗證 organizer_id 是否為有效的 MongoDB ID
+    if (!validator.isMongoId(organizerId)) {
+      throw new Error('無效的主辦者ID')
+    }
     req.body.image = req.file?.path || ''
 
     // 主辦者加到 groupMembers
     req.body.groupMembers = [
       {
-        user_id: req.user._id,
+        user_id: organizerId,
         join_date: new Date(),
       },
     ]
 
     // 建立揪團
-    const result = await Group.create(req.body)
+    const result = await Group.create({ ...req.body, organizer_id: organizerId })
     console.log('建立揪團 ID', result._id)
 
     // 包裝成 { group_id: result._id } 格式，
@@ -29,7 +33,7 @@ export const create = async (req, res) => {
 
     // 更新使用者的主辦揪團紀錄，使用 group._id
     const updatedUser = await User.findByIdAndUpdate(
-      req.user._id,
+      organizerId,
       {
         $push: { organize_groups: groupEntry },
       },

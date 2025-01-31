@@ -179,13 +179,49 @@ export const remove = async (req, res) => {
   try {
     if (!validator.isMongoId(req.params.id)) throw new Error('ID')
 
-    // 1.找到要刪除的揪團
-    const result = await User.findById(req.params.id).orFail(new Error('NOT FOUND'))
+    // 1.找到要刪除的使用者
+    const user = await User.findById(req.params.id).orFail(new Error('NOT FOUND'))
+
+    // 2. 找出該使用者主辦的所有揪團
+    const organizeGroups = await Group.find({ organizer_id: user._id })
+
+    // 3. 更新所有參加者的相關資料
+    for (const group of organizeGroups) {
+      // 更新參加者的 join_groups
+      await User.updateMany(
+        {
+          _id: { $in: group.members },
+        },
+        {
+          $pull: { join_groups: group._id },
+        },
+      )
+      // 刪除揪團相關聊天室
+      await Chat.deleteMany({ group_id: group._id })
+    }
+
+    // 4. 刪除該使用者主辦的所有揪團
+    await Group.deleteMany({ organizer_id: user._id })
+
+    // 5.找出使用者參加的揪團
+    const joinedGroups = await Group.find({ 'groupMembers.user_id': user._id })
+
+    // 6.更新參加揪團資料並刪除相關聊天室
+    for (const group of joinedGroups) {
+      // 更新成員名單和人數
+      await Group.findByIdAndUpdate(group._id, {
+        $pull: { groupMembers: { user_id: user._id } },
+        $inc: { member_count: -1 },
+      })
+    }
+
+    // 7.刪除使用者
+    await User.findByIdAndDelete(req.params.id)
 
     res.status(StatusCodes.OK).json({
       success: true,
-      message: '',
-      result,
+      message: '刪除成功',
+      result: user,
     })
   } catch (error) {
     console.log(error)
