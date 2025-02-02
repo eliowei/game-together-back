@@ -6,6 +6,7 @@ import routerUser from './routers/user.js'
 import routerGroup from './routers/group.js'
 import routerChat from './routers/chat.js'
 import routerContactForm from './routers/contactform.js'
+import routerApi from './routers/api.js'
 import './passport.js'
 import cors from 'cors'
 
@@ -53,6 +54,7 @@ app.use('/user', routerUser)
 app.use('/group', routerGroup)
 app.use('/chat', routerChat)
 app.use('/contactform', routerContactForm)
+app.use('/api', routerApi)
 
 app.listen(process.env.PORT || 4000, () => {
   console.log('伺服器啟動成功')

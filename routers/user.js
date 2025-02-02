@@ -5,11 +5,11 @@ import upload from '../middlewares/upload.js'
 
 const router = Router()
 // 註冊
-router.post('/', user.create)
+router.post('/', upload, user.create)
 // 登入
 router.post('/login', auth.login, user.login)
 // 取得使用者資料
-router.get('/profile', auth.jwt, user.profile)
+router.get('/profile', auth.jwt, upload, user.profile)
 // 編輯使用者資料
 router.patch('/profile', auth.jwt, upload, user.edit)
 // 更新使用者資料(TOKEN舊換新)
