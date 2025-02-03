@@ -1,14 +1,10 @@
 import { Router } from 'express'
 import upload from '../middlewares/upload.js'
+import * as auth from '../middlewares/auth.js'
+import * as api from '../controllers/api.js'
 
 const router = Router()
 
-router.post('/upload', upload, (req, res) => {
-  res.json({
-    success: true,
-    message: '上傳成功',
-    file: req.file,
-  })
-})
+router.post('/upload', auth.jwt, upload, api.upload)
 
 export default router
