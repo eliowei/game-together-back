@@ -10,8 +10,9 @@ router.post('/', upload, user.create)
 router.post('/login', auth.login, user.login)
 // 取得使用者資料
 router.get('/profile', auth.jwt, upload, user.profile)
+
 // 編輯使用者資料
-router.patch('/profile', auth.jwt, upload, user.edit)
+router.patch('/profile/:id', auth.jwt, upload, user.edit)
 // 更新使用者資料(TOKEN舊換新)
 router.patch('/refresh', auth.jwt, user.refresh)
 // 登出

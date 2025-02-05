@@ -73,7 +73,11 @@ export const create = async (req, res) => {
 
 export const getAll = async (req, res) => {
   try {
-    const result = await Group.find().populate('organizer_id', 'name').lean()
+    const result = await Group.find()
+      .populate('organizer_id', 'name')
+      .lean()
+      .populate('groupMembers.user_id', ['name', 'image'])
+      .lean()
     res.status(StatusCodes.OK).json({
       success: true,
       message: '',
@@ -94,7 +98,9 @@ export const getId = async (req, res) => {
     const result = await Group.findById(req.params.id)
       .populate('organizer_id', 'name')
       .lean()
-      .populate('groupMembers.user_id', 'name')
+      .populate('groupMembers.user_id', ['name', 'image'])
+      .lean()
+      .populate('comments.user_id', ['name', 'image'])
       .lean()
       .orFail(new Error('NOT FOUND'))
     res.status(StatusCodes.OK).json({
@@ -113,6 +119,61 @@ export const getId = async (req, res) => {
       res.status(StatusCodes.NOT_FOUND).json({
         success: false,
         message: 'notFound',
+      })
+    } else {
+      res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+        success: false,
+        message: 'serverError',
+      })
+    }
+  }
+}
+
+export const addComment = async (req, res) => {
+  try {
+    if (!validator.isMongoId(req.params.id)) throw new Error('ID')
+
+    const result = await Group.findByIdAndUpdate(
+      req.params.id,
+      {
+        $push: {
+          comments: {
+            user_id: req.user._id,
+            content: req.body.content,
+          },
+        },
+      },
+      {
+        new: true,
+        select: 'comments',
+        runValidators: true,
+      },
+    ).populate('comments.user_id', ['name', 'image'])
+
+    if (!result) throw new Error('NOT FOUND')
+
+    res.status(StatusCodes.OK).json({
+      success: true,
+      message: '',
+      result: result.comments[result.comments.length - 1],
+    })
+  } catch (error) {
+    console.log(error)
+    if (error.name === 'CastError' || error.message === 'ID') {
+      res.status(StatusCodes.BAD_REQUEST).json({
+        success: false,
+        message: 'idInvalid',
+      })
+    } else if (error.message === 'NOT FOUND') {
+      res.status(StatusCodes.NOT_FOUND).json({
+        success: false,
+        message: 'notFound',
+      })
+    } else if (error.name === 'ValidationError') {
+      const key = Object.keys(error.errors)[0]
+      res.status(StatusCodes.BAD_REQUEST).json({
+        success: false,
+        message: error.errors[key].message,
       })
     } else {
       res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
@@ -152,8 +213,7 @@ export const edit = async (req, res) => {
         success: false,
         message: 'notFound',
       })
-    }
-    if (error.name === 'ValidationError') {
+    } else if (error.name === 'ValidationError') {
       const key = Object.keys(error.errors)[0]
       res.status(StatusCodes.BAD_REQUEST).json({
         success: false,

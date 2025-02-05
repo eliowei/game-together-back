@@ -8,6 +8,7 @@ import Chat from '../model/chat.js'
 // 註冊
 export const create = async (req, res) => {
   try {
+    req.body.image = req.file?.path || ''
     await User.create(req.body)
     res.status(StatusCodes.OK).json({
       success: true,
@@ -67,10 +68,12 @@ export const profile = async (req, res) => {
     success: true,
     message: '',
     result: {
+      id: req.user._id,
       email: req.user.email,
       account: req.user.account,
       role: req.user.role,
       tags: req.user.tags,
+      image: req.user.image,
     },
   })
 }
@@ -78,21 +81,25 @@ export const profile = async (req, res) => {
 // 編輯使用者資料
 export const edit = async (req, res) => {
   try {
+    // 1. 檢查 ID 格式
+    if (!validator.isMongoId(req.params.id)) throw new Error('ID')
+
     req.body.image = req.file?.path
 
     const result = await User.findByIdAndUpdate(
-      req.user._id,
+      req.params.id,
       {
         name: req.body.name,
         age: req.body.age,
         gender: req.body.gender,
         tags: req.body.tags,
+        image: req.body.image,
       },
       {
         runValidators: true,
         new: true,
       },
-    )
+    ).orFail(new Error('NOT FOUND'))
 
     res.status(StatusCodes.OK).json({
       success: true,
@@ -101,7 +108,17 @@ export const edit = async (req, res) => {
     })
   } catch (error) {
     console.log(error)
-    if (error.name === 'ValidationError') {
+    if (error.name === 'CastError' || error.message === 'ID') {
+      res.status(StatusCodes.BAD_REQUEST).json({
+        sucess: false,
+        message: 'idInvalid',
+      })
+    } else if (error.message === 'NOT FOUND') {
+      res.status(StatusCodes.NOT_FOUND).json({
+        success: false,
+        message: 'notFound',
+      })
+    } else if (error.name === 'ValidationError') {
       const key = Object.keys(error.errors)[0]
       res.status(StatusCodes.BAD_REQUEST).json({
         success: false,

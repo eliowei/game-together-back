@@ -5,6 +5,21 @@ const GroupMember = new Schema({
   join_date: { type: Date, default: Date.now },
 })
 
+const Comment = new Schema(
+  {
+    user_id: { type: ObjectId, ref: 'users', required: [true, 'userIdRequired'] },
+    content: {
+      type: String,
+      required: [true, 'commentRequired'],
+      minlength: [1, 'commentMinLength'],
+    },
+  },
+  {
+    versionKey: false,
+    timestamps: true,
+  },
+)
+
 const Group = new Schema(
   {
     organizer_id: {
@@ -100,6 +115,7 @@ const Group = new Schema(
       required: [true, 'timeRequired'],
     },
     groupMembers: [GroupMember],
+    comments: [Comment],
   },
   {
     versionKey: false,
