@@ -74,7 +74,7 @@ export const create = async (req, res) => {
 export const getAll = async (req, res) => {
   try {
     const result = await Group.find()
-      .populate('organizer_id', 'name')
+      .populate('organizer_id', ['name', 'image'])
       .lean()
       .populate('groupMembers.user_id', ['name', 'image'])
       .lean()
@@ -96,7 +96,7 @@ export const getId = async (req, res) => {
   try {
     if (!validator.isMongoId(req.params.id)) throw new Error('ID')
     const result = await Group.findById(req.params.id)
-      .populate('organizer_id', 'name')
+      .populate('organizer_id', ['name', 'image'])
       .lean()
       .populate('groupMembers.user_id', ['name', 'image'])
       .lean()

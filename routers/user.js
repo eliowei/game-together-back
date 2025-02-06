@@ -32,12 +32,13 @@ router.delete('/organizerGroup/:id', auth.jwt, user.deleteOrganizerGroup)
 // 以Token，查詢已參加的揪團
 router.get('/joinGroup', auth.jwt, user.getJoinGroup)
 // 參加揪團
-router.post('/joinGroup', auth.jwt, user.updateJoinGroup)
+router.post('/joinGroup/:id', auth.jwt, user.updateJoinGroup)
 // 離開揪團
-router.delete('/joinGroup', auth.jwt, user.deleteJoinGroup)
+router.delete('/joinGroup/:id', auth.jwt, user.deleteJoinGroup)
 
 // 以Token，查詢已收藏的揪團
 router.get('/favoriteGroup', auth.jwt, user.getFavoriteGroup)
 // 收藏跟取消收藏揪團
-router.patch('/favoriteGroup', auth.jwt, user.updateFavoriteGroup)
+router.post('/favoriteGroup/:id', auth.jwt, user.addFavoriteGroup)
+router.delete('/favoriteGroup/:id', auth.jwt, user.deleteFavoriteGroup)
 export default router

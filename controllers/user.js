@@ -51,6 +51,9 @@ export const login = async (req, res) => {
         email: req.user.email,
         account: req.user.account,
         role: req.user.role,
+        tags: req.user.tags,
+        image: req.user.image,
+        favorite_groups: req.user.favorite_groups,
       },
     })
   } catch (error) {
@@ -74,6 +77,7 @@ export const profile = async (req, res) => {
       role: req.user.role,
       tags: req.user.tags,
       image: req.user.image,
+      favorite_groups: req.user.favorite_groups,
     },
   })
 }
@@ -464,7 +468,7 @@ export const getJoinGroup = async (req, res) => {
 // 使用者參加揪團
 export const updateJoinGroup = async (req, res) => {
   try {
-    const { group_id } = req.body
+    const group_id = req.params.id
     // 1. 檢查 ID 格式
     if (!validator.isMongoId(group_id)) throw new Error('ID')
 
@@ -551,7 +555,7 @@ export const updateJoinGroup = async (req, res) => {
 // 使用者離開揪團
 export const deleteJoinGroup = async (req, res) => {
   try {
-    const { group_id } = req.body
+    const group_id = req.params.id
     // 1. 檢查 ID 格式
     if (!validator.isMongoId(group_id)) {
       throw new Error('ID')
@@ -665,10 +669,10 @@ export const getFavoriteGroup = async (req, res) => {
   }
 }
 
-// 收藏跟取消揪團
-export const updateFavoriteGroup = async (req, res) => {
+// 收藏揪團
+export const addFavoriteGroup = async (req, res) => {
   try {
-    const { group_id } = req.body
+    const group_id = req.params.id
 
     // 1. 檢查 ID 格式
     if (!validator.isMongoId(group_id)) throw new Error('ID')
@@ -677,17 +681,13 @@ export const updateFavoriteGroup = async (req, res) => {
     await Group.findById(group_id).orFail(new Error('NOT FOUND'))
 
     // 3. 檢查是否已收藏
-    const isFavorite = req.user.favorite_groups.some(
-      (group) => group.group_id?.toString() === group_id,
-    )
+    const isFavorite = req.user.favorite_groups.some((group) => {
+      return group.group_id.toString() === group_id
+    })
 
-    // 4. 更新收藏揪團狀態，如果有收藏則找到該筆揪團資料刪除，否則就新增進去
-    if (isFavorite) {
-      const idx = req.user.favorite_groups.findIndex((g) => g.group_id?.toString() === group_id)
-      req.user.favorite_groups.splice(idx, 1)
-    } else {
-      req.user.favorite_groups.push({ group_id })
-    }
+    if (isFavorite) throw new Error('ALREADY FAVORITE')
+
+    req.user.favorite_groups.push({ group_id: group_id })
     await req.user.save()
 
     res.status(StatusCodes.OK).json({
@@ -706,6 +706,66 @@ export const updateFavoriteGroup = async (req, res) => {
       res.status(StatusCodes.BAD_REQUEST).json({
         success: false,
         message: 'notFound',
+      })
+    } else if (error.name === 'ALREADY FAVORITE') {
+      res.status(StatusCodes.BAD_REQUEST).json({
+        success: false,
+        message: 'alreadyFavorite',
+      })
+    } else {
+      res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+        success: false,
+        message: 'serverError',
+      })
+    }
+  }
+}
+
+export const deleteFavoriteGroup = async (req, res) => {
+  try {
+    const group_id = req.params.id
+
+    // 1. 檢查 ID 格式
+    if (!validator.isMongoId(group_id)) throw new Error('ID')
+
+    // 2. 檢查揪團是否存在
+    await Group.findById(group_id).orFail(new Error('NOT FOUND'))
+
+    // 3. 檢查是否已收藏
+    const isFavorite = req.user.favorite_groups.some((group) => {
+      return group.group_id.toString() === group_id
+    })
+
+    if (!isFavorite) throw new Error('NOT FAVORITE')
+
+    const idx = req.user.favorite_groups.findIndex(
+      (group) => group.group_id.toString() === group_id.toString(),
+    )
+
+    req.user.favorite_groups.splice(idx, 1)
+    await req.user.save()
+
+    res.status(StatusCodes.OK).json({
+      success: true,
+      message: '',
+      result: req.user.favorite_groups,
+    })
+  } catch (error) {
+    console.log(error)
+    if (error.name === 'CastError' || error.message === 'ID') {
+      res.status(StatusCodes.NOT_FOUND).json({
+        success: false,
+        message: 'idInvalid',
+      })
+    } else if (error.message === 'NOT FOUND') {
+      res.status(StatusCodes.BAD_REQUEST).json({
+        success: false,
+        message: 'notFound',
+      })
+    } else if (error.name === 'ALREADY FAVORITE') {
+      res.status(StatusCodes.BAD_REQUEST).json({
+        success: false,
+        message: 'alreadyFavorite',
       })
     } else {
       res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
