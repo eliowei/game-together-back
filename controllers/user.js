@@ -74,6 +74,9 @@ export const profile = async (req, res) => {
       id: req.user._id,
       email: req.user.email,
       account: req.user.account,
+      name: req.user.name,
+      age: req.user.age,
+      gender: req.user.gender,
       role: req.user.role,
       tags: req.user.tags,
       image: req.user.image,
@@ -81,8 +84,55 @@ export const profile = async (req, res) => {
     },
   })
 }
-
 // 編輯使用者資料
+export const editProfile = async (req, res) => {
+  try {
+    req.body.image = req.file?.path
+
+    const result = await User.findByIdAndUpdate(
+      req.user._id,
+      {
+        name: req.body.name,
+        age: req.body.age,
+        gender: req.body.gender,
+        image: req.body.image,
+        tags: req.body.tags,
+      },
+      {
+        runValidators: true,
+        new: true,
+      },
+    ).orFail(new Error('NOT FOUND'))
+
+    res.status(StatusCodes.OK).json({
+      success: true,
+      message: '',
+      result,
+    })
+  } catch (error) {
+    console.log(error)
+
+    if (error.message === 'NOT FOUND') {
+      res.status(StatusCodes.NOT_FOUND).json({
+        success: false,
+        message: 'notFound',
+      })
+    } else if (error.name === 'ValidationError') {
+      const key = Object.keys(error.errors)[0]
+      res.status(StatusCodes.BAD_REQUEST).json({
+        success: false,
+        message: error.errors[key].message,
+      })
+    } else {
+      res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+        success: false,
+        message: 'serverError',
+      })
+    }
+  }
+}
+
+// 編輯指定使用者資料
 export const edit = async (req, res) => {
   try {
     // 1. 檢查 ID 格式
