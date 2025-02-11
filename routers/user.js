@@ -23,6 +23,8 @@ router.get('/all', auth.jwt, auth.admin, user.getAll)
 // 刪除
 router.delete('/:id', auth.jwt, auth.admin, user.remove)
 
+// 建立揪團
+router.post('/organizerGroup', auth.jwt, user.createOrganizerGroup)
 // 以Token，查詢主辦揪團
 router.get('/organizerGroup', auth.jwt, user.getOrganizerGroup)
 // 編輯主辦揪團

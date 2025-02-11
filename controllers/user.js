@@ -49,6 +49,7 @@ export const login = async (req, res) => {
       result: {
         token,
         email: req.user.email,
+        name: req.user.name,
         account: req.user.account,
         role: req.user.role,
         tags: req.user.tags,
@@ -311,6 +312,72 @@ export const remove = async (req, res) => {
       res.status(StatusCodes.FORBIDDEN).json({
         sucess: false,
         message: 'notOrganizer',
+      })
+    } else {
+      res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+        success: false,
+        message: 'serverError',
+      })
+    }
+  }
+}
+
+export const createOrganizerGroup = async (req, res) => {
+  try {
+    const organizerId = req.body.organizer_id || req.user._id
+
+    // 驗證 organizer_id 是否為有效的 MongoDB ID
+    if (!validator.isMongoId(organizerId)) {
+      throw new Error('無效的主辦者ID')
+    }
+
+    // 主辦者加到 groupMembers
+    req.body.groupMembers = [
+      {
+        user_id: organizerId,
+        join_date: new Date(),
+      },
+    ]
+
+    // 建立揪團
+    const result = await Group.create({ ...req.body, organizer_id: organizerId })
+    console.log('建立揪團 ID', result._id)
+
+    // 包裝成 { group_id: result._id } 格式，
+    const groupEntry = {
+      group_id: result._id,
+    }
+
+    // 更新使用者的主辦揪團紀錄，使用 group._id
+    const updatedUser = await User.findByIdAndUpdate(
+      organizerId,
+      {
+        $push: { organize_groups: groupEntry },
+      },
+      { new: true },
+    )
+    // 確認 ID 是否正確寫入
+    // console.log('新建揪團 ID:', result._id)
+    console.log('新建揪團', result)
+    console.log('更新後的使用者資料:', updatedUser)
+
+    // 建立聊天室
+    await Chat.create({
+      group_id: result._id,
+    })
+
+    res.status(StatusCodes.OK).json({
+      sucess: true,
+      message: '',
+      result,
+    })
+  } catch (error) {
+    console.log(error)
+    if (error.name === 'ValidationError') {
+      const key = Object.keys(error.errors)[0]
+      res.status(StatusCodes.BAD_REQUEST).json({
+        success: false,
+        message: error.errors[key].message,
       })
     } else {
       res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
