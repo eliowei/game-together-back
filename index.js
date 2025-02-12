@@ -14,6 +14,7 @@ mongoose
   .connect(process.env.DB_URL)
   .then(() => {
     console.log('資料庫連線成功')
+    mongoose.set('sanitizeFilter', true)
   })
   .catch((error) => {
     console.log('資料庫連線失敗')
