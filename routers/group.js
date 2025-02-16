@@ -10,6 +10,8 @@ router.post('/', auth.jwt, upload, group.create)
 router.get('/all', auth.jwt, group.getAll)
 // 取得所有揪團
 router.get('/', group.getAll)
+
+router.post('/search', group.getAll)
 // 取得指定的揪團
 router.get('/:id', group.getId)
 // 新增揪團留言

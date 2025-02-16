@@ -3,6 +3,7 @@ import { StatusCodes } from 'http-status-codes'
 import validator from 'validator'
 import User from '../model/user.js'
 import Chat from '../model/chat.js'
+import { getCityKey } from '../utils/cityMapping.js'
 
 export const create = async (req, res) => {
   try {
@@ -73,7 +74,55 @@ export const create = async (req, res) => {
 
 export const getAll = async (req, res) => {
   try {
-    const result = await Group.find()
+    const searchParams = req.method === 'POST' ? req.body : req.query
+    console.log('搜尋條件：', searchParams)
+    const filter = {}
+
+    if (searchParams.search) {
+      const cityKey = getCityKey(searchParams.search)
+
+      filter.$or = [
+        { name: new RegExp(searchParams.search, 'i') },
+        { description: new RegExp(searchParams.search, 'i') },
+        { type: new RegExp(searchParams.search, 'i') },
+        { city: new RegExp(cityKey, 'i') },
+        { region: new RegExp(searchParams.search, 'i') },
+        { tags: new RegExp(searchParams.search, 'i') },
+      ]
+    }
+
+    // 類型
+    else if (searchParams.type) {
+      filter.type = new RegExp(searchParams.type, 'i')
+    }
+
+    // 地區搜尋
+    else if (searchParams.region) {
+      const regions = searchParams.region.split(',')
+
+      filter.$or = regions.map((item) => {
+        const [city, region] = item.match(/(.+?)[市縣](.+?[市區鎮鄉])?/).slice(1)
+        return {
+          region: new RegExp(region || '', 'i'),
+        }
+      })
+    }
+    // 標籤搜尋
+    else if (searchParams.tags) {
+      const searchTags = Array.isArray(searchParams.tags) ? searchParams.tags : [searchParams.tags]
+
+      filter.$or = searchTags.map((tag) => ({
+        tags: new RegExp(tag, 'i'),
+      }))
+    }
+    // 日期搜尋
+    else if (searchParams.time) {
+      filter.time = new RegExp(searchParams.time, 'i')
+      console.log('搜尋日期：', searchParams.time)
+    }
+    console.log('最終搜尋條件：', filter)
+
+    const result = await Group.find(filter)
       .populate('organizer_id', ['name', 'image'])
       .lean()
       .populate('groupMembers.user_id', ['name', 'image'])
@@ -83,6 +132,12 @@ export const getAll = async (req, res) => {
       message: '',
       result,
     })
+
+    console.log('找到的結果數量：', result.length)
+    console.log(
+      '結果的標籤：',
+      result.map((item) => item.tags),
+    )
   } catch (error) {
     console.log(error)
     res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
