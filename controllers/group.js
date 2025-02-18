@@ -90,7 +90,6 @@ export const getAll = async (req, res) => {
         { tags: new RegExp(searchParams.search, 'i') },
       ]
     }
-
     // 類型
     else if (searchParams.type) {
       filter.type = new RegExp(searchParams.type, 'i')
@@ -102,7 +101,9 @@ export const getAll = async (req, res) => {
 
       filter.$or = regions.map((item) => {
         const [city, region] = item.match(/(.+?)[市縣](.+?[市區鎮鄉])?/).slice(1)
+        const cityKeys = getCityKey(city)
         return {
+          city: new RegExp(cityKeys || '', 'i'),
           region: new RegExp(region || '', 'i'),
         }
       })
@@ -132,6 +133,7 @@ export const getAll = async (req, res) => {
       message: '',
       result,
     })
+    console.log(result)
 
     console.log('找到的結果數量：', result.length)
     console.log(
