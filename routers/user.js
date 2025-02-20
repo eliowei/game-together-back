@@ -13,7 +13,7 @@ router.get('/profile', auth.jwt, upload, user.profile)
 // 編輯使用者資料
 router.patch('/profile', auth.jwt, upload, user.editProfile)
 // 編輯指定使用者資料
-router.patch('/profile/:id', auth.jwt, upload, user.edit)
+router.patch('/profile/:id', auth.jwt, auth.admin, upload, user.edit)
 // 更新使用者資料(TOKEN舊換新)
 router.patch('/refresh', auth.jwt, user.refresh)
 // 登出
@@ -31,6 +31,8 @@ router.get('/organizerGroup', auth.jwt, user.getOrganizerGroup)
 router.patch('/organizerGroup/:id', auth.jwt, upload, user.editOrganizerGroup)
 // 刪除主辦揪團
 router.delete('/organizerGroup/:id', auth.jwt, user.deleteOrganizerGroup)
+// 踢除揪團成員
+router.patch('/organizerGroup/:id/kick', auth.jwt, user.kickOrganizerGroup)
 
 // 以Token，查詢已參加的揪團
 router.get('/joinGroup', auth.jwt, user.getJoinGroup)

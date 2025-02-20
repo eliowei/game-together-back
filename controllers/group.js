@@ -159,6 +159,8 @@ export const getId = async (req, res) => {
       .lean()
       .populate('comments.user_id', ['name', 'image'])
       .lean()
+      .populate('comments.reply.author', ['name', 'image'])
+      .lean()
       .orFail(new Error('NOT FOUND'))
     res.status(StatusCodes.OK).json({
       sucess: true,
@@ -231,6 +233,190 @@ export const addComment = async (req, res) => {
       res.status(StatusCodes.BAD_REQUEST).json({
         success: false,
         message: error.errors[key].message,
+      })
+    } else {
+      res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+        success: false,
+        message: 'serverError',
+      })
+    }
+  }
+}
+
+export const replyComment = async (req, res) => {
+  try {
+    if (!validator.isMongoId(req.params.id)) throw new Error('ID')
+
+    // 檢查揪團是否存在
+    const group = await Group.findById(req.params.id).orFail(new Error('NOT FOUND'))
+
+    // 檢查是否為主辦者
+    if (group.organizer_id.toString() !== req.user._id.toString()) {
+      throw new Error('NOT ORGANIZER')
+    }
+    const result = await Group.findOneAndUpdate(
+      {
+        _id: req.params.id,
+        'comments._id': req.body.comment_id,
+      },
+      {
+        $set: {
+          'comments.$.reply': {
+            author: req.user._id,
+            message: req.body.message,
+            date: new Date(),
+          },
+        },
+      },
+      {
+        new: true,
+        runValidators: true,
+      },
+    ).populate('comments.reply.author', ['name', 'image'])
+
+    res.status(StatusCodes.OK).json({
+      sucess: true,
+      message: '',
+      result: result.comments[result.comments.length - 1],
+    })
+  } catch (error) {
+    if (error.name === 'CastError' || error.message === 'ID') {
+      res.status(StatusCodes.BAD_REQUEST).json({
+        success: false,
+        message: 'idInvalid',
+      })
+    } else if (error.message === 'NOT FOUND') {
+      res.status(StatusCodes.NOT_FOUND).json({
+        success: false,
+        message: 'notFound',
+      })
+    } else if (error.name === 'ValidationError') {
+      const key = Object.keys(error.errors)[0]
+      res.status(StatusCodes.BAD_REQUEST).json({
+        success: false,
+        message: error.errors[key].message,
+      })
+    } else {
+      res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+        success: false,
+        message: 'serverError',
+      })
+    }
+  }
+}
+
+export const removeReplyComment = async (req, res) => {
+  try {
+    if (!validator.isMongoId(req.params.id)) throw new Error('ID')
+
+    // 檢查揪團是否存在
+    const group = await Group.findById(req.params.id).orFail(new Error('NOT FOUND'))
+
+    if (group.organizer_id.toString() !== req.user._id.toString()) throw new Error('NOT ORGANIZER')
+
+    const hasReply = group.comments.find(
+      (comment) => comment._id.toString() === req.body.comment_id,
+    ).reply.message
+
+    // 檢查是否已回覆
+    if (!hasReply) throw new Error('NOT FOUND REPLY')
+
+    const result = await Group.findOneAndUpdate(
+      {
+        _id: req.params.id,
+        'comments._id': req.body.comment_id,
+      },
+      {
+        $unset: {
+          'comments.$.reply': '',
+        },
+      },
+      {
+        new: true,
+      },
+    ).orFail(new Error('NOT FOUND'))
+
+    res.status(StatusCodes.OK).json({
+      sucess: true,
+      message: '',
+      result: result.comments[result.comments.length - 1],
+    })
+  } catch (error) {
+    console.log(error)
+    if (error.name === 'CastError' || error.message === 'ID') {
+      res.status(StatusCodes.BAD_REQUEST).json({
+        success: false,
+        message: 'idInvalid',
+      })
+    } else if (error.message === 'NOT FOUND') {
+      res.status(StatusCodes.NOT_FOUND).json({
+        success: false,
+        message: 'notFound',
+      })
+    } else if (error.message === 'NOT ORGANIZER') {
+      res.status(StatusCodes.FORBIDDEN).json({
+        success: false,
+        message: 'notOrganizer',
+      })
+    } else if (error.message === 'NOT FOUND REPLY') {
+      res.status(StatusCodes.NOT_FOUND).json({
+        success: false,
+        message: 'notFoundReply',
+      })
+    } else {
+      res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+        success: false,
+        message: 'serverError',
+      })
+    }
+  }
+}
+
+export const removeComment = async (req, res) => {
+  try {
+    if (!validator.isMongoId(req.params.id)) throw new Error('ID')
+
+    // 檢查揪團是否存在
+    const group = await Group.findById(req.params.id).orFail(new Error('NOT FOUND'))
+
+    // 檢查是否為主辦者
+    if (group.organizer_id.toString() !== req.user._id.toString()) throw new Error('NOT ORGANIZER')
+
+    // const hasReply = group.comments.find(
+    //   (comment) => comment._id.toString() === req.body.comment_id,
+    // ).reply.message
+
+    const result = await Group.findByIdAndUpdate(
+      req.params.id,
+      {
+        $pull: { comments: { _id: req.body.comment_id } },
+      },
+      {
+        new: true,
+      },
+    ).orFail(new Error('NOT FOUND'))
+
+    res.status(StatusCodes.OK).json({
+      success: true,
+      message: '',
+      result: result.comments,
+    })
+  } catch (error) {
+    console.log(error)
+    if (error.name === 'CastError' || error.message === 'ID') {
+      res.status(StatusCodes.BAD_REQUEST).json({
+        success: false,
+        message: 'idInvalid',
+      })
+    } else if (error.message === 'NOT FOUND') {
+      res.status(StatusCodes.NOT_FOUND).json({
+        success: false,
+        message: 'notFound',
+      })
+    } else if (error.message === 'NOT ORGANIZER') {
+      res.status(StatusCodes.FORBIDDEN).json({
+        success: false,
+        message: 'notOrganizer',
       })
     } else {
       res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({

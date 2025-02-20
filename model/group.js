@@ -13,6 +13,11 @@ const Comment = new Schema(
       required: [true, 'commentRequired'],
       minlength: [1, 'commentMinLength'],
     },
+    reply: {
+      author: { type: ObjectId, ref: 'users' },
+      message: String,
+      date: Date,
+    },
   },
   {
     versionKey: false,

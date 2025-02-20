@@ -16,6 +16,12 @@ router.post('/search', group.getAll)
 router.get('/:id', group.getId)
 // 新增揪團留言
 router.post('/:id/comment', auth.jwt, group.addComment)
+// 刪除揪團留言
+router.delete('/:id/comment', auth.jwt, group.removeComment)
+// 回覆揪團留言
+router.patch('/:id/replayComment', auth.jwt, group.replyComment)
+// 刪除回覆揪團留言
+router.delete('/:id/replayComment', auth.jwt, group.removeReplyComment)
 
 // 編輯揪團
 router.patch('/:id', auth.jwt, auth.admin, upload, group.edit)

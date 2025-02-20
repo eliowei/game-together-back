@@ -4,6 +4,7 @@ import jwt from 'jsonwebtoken'
 import Group from '../model/group.js'
 import validator from 'validator'
 import Chat from '../model/chat.js'
+import bcrypt from 'bcrypt'
 
 // 註冊
 export const create = async (req, res) => {
@@ -48,9 +49,12 @@ export const login = async (req, res) => {
       message: '',
       result: {
         token,
+        id: req.user._id,
         email: req.user.email,
-        name: req.user.name,
         account: req.user.account,
+        name: req.user.name,
+        age: req.user.age,
+        gender: req.user.gender,
         role: req.user.role,
         tags: req.user.tags,
         image: req.user.image,
@@ -139,27 +143,27 @@ export const edit = async (req, res) => {
     // 1. 檢查 ID 格式
     if (!validator.isMongoId(req.params.id)) throw new Error('ID')
 
-    req.body.image = req.file?.path
+    const user = await User.findById(req.params.id).orFail(new Error('NOT FOUND'))
 
-    const result = await User.findByIdAndUpdate(
-      req.params.id,
-      {
-        name: req.body.name,
-        age: req.body.age,
-        gender: req.body.gender,
-        tags: req.body.tags,
-        image: req.body.image,
-      },
-      {
-        runValidators: true,
-        new: true,
-      },
-    ).orFail(new Error('NOT FOUND'))
+    if (req.file) {
+      user.image = req.file?.path
+    }
+    if (req.body.email) user.email = req.body.email
+    if (req.body.name) user.name = req.body.name
+    if (req.body.account) user.account = req.body.account
+    if (req.body.password) {
+      const isSamePassword = await bcrypt.compare(req.body.password, user.password)
+      if (isSamePassword) throw new Error('SAME PASSWORD')
+      user.password = req.body.password
+    }
+    if (req.body.gender) user.gender = req.body.gender
+    if (req.body.age) user.age = req.body.age
+    await user.save()
 
     res.status(StatusCodes.OK).json({
       success: true,
       message: '',
-      result,
+      result: user,
     })
   } catch (error) {
     console.log(error)
@@ -172,6 +176,11 @@ export const edit = async (req, res) => {
       res.status(StatusCodes.NOT_FOUND).json({
         success: false,
         message: 'notFound',
+      })
+    } else if (error.message === 'SAME PASSWORD') {
+      res.status(StatusCodes.BAD_REQUEST).json({
+        success: false,
+        message: 'samePassword',
       })
     } else if (error.name === 'ValidationError') {
       const key = Object.keys(error.errors)[0]
@@ -538,6 +547,77 @@ export const deleteOrganizerGroup = async (req, res) => {
       res.status(StatusCodes.FORBIDDEN).json({
         sucess: false,
         message: 'notOrganizer',
+      })
+    } else {
+      res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+        success: false,
+        message: 'serverError',
+      })
+    }
+  }
+}
+// 主辦者踢除揪團成員
+export const kickOrganizerGroup = async (req, res) => {
+  try {
+    // 1. 檢查 ID 格式
+    if (!validator.isMongoId(req.params.id)) throw new Error('ID')
+
+    // 2. 檢查揪團是否存在
+    const group = await Group.findById(req.params.id).orFail(new Error('NOT FOUND'))
+
+    // 確認是否為主辦者
+    if (group.organizer_id.toString() !== req.user._id.toString()) {
+      throw new Error('NOT ORGANIZER')
+    }
+
+    // 3. 檢查被踢除者是否為揪團成員
+    const member = group.groupMembers.find(
+      (member) => member.user_id.toString() === req.body.user_id,
+    )
+    if (!member) throw new Error('NOT MEMBER')
+
+    const result = await Group.findByIdAndUpdate(
+      req.params.id,
+      {
+        $pull: { groupMembers: { user_id: req.body.user_id } },
+        $inc: { member_count: -1 },
+      },
+      {
+        new: true,
+        runValidators: true,
+      },
+    ).populate('groupMembers.user_id', ['name', 'image'])
+
+    await User.findByIdAndUpdate(req.body.user_id, {
+      $pull: { join_groups: { group_id: req.params.id } },
+    })
+
+    res.status(StatusCodes.OK).json({
+      success: true,
+      message: '',
+      result,
+    })
+  } catch (error) {
+    console.log(error)
+    if (error.name === 'CastError' || error.message === 'ID') {
+      res.status(StatusCodes.BAD_REQUEST).json({
+        success: false,
+        message: 'idInvalid',
+      })
+    } else if (error.message === 'NOT FOUND') {
+      res.status(StatusCodes.NOT_FOUND).json({
+        success: false,
+        message: 'notFound',
+      })
+    } else if (error.message === 'NOT ORGANIZER') {
+      res.status(StatusCodes.FORBIDDEN).json({
+        success: false,
+        message: 'notOrganizer',
+      })
+    } else if (error.message === 'NOT MEMBER') {
+      res.status(StatusCodes.BAD_REQUEST).json({
+        success: false,
+        message: 'notMember',
       })
     } else {
       res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
