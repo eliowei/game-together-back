@@ -634,7 +634,10 @@ export const getJoinGroup = async (req, res) => {
     // 使用 User model 查詢
     const result = await User.findById(req.user._id).populate({
       path: 'join_groups.group_id',
-      model: 'groups',
+      populate: {
+        path: 'groupMembers.user_id',
+        select: 'image',
+      },
     })
 
     if (!result) {
@@ -839,7 +842,10 @@ export const getFavoriteGroup = async (req, res) => {
   try {
     const result = await User.findById(req.user._id).populate({
       path: 'favorite_groups.group_id',
-      model: 'groups',
+      populate: {
+        path: 'groupMembers.user_id',
+        select: 'image',
+      },
     })
 
     if (!result) {
