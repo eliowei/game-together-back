@@ -80,10 +80,7 @@ export const getId = async (req, res) => {
     // 檢查劉天室是否存在
     const chat = await Chat.findOne({ group_id: req.params.id })
       // 連結User資料，只取name欄位
-      .populate({
-        path: 'messages.user_id',
-        select: 'name -_id',
-      })
+      .populate('messages.user_id', 'name image -_id')
       // 選擇指定欄位
       .select({
         group_id: req.params.id,
@@ -91,7 +88,7 @@ export const getId = async (req, res) => {
       })
       // 拋出錯誤
       .orFail(new Error('NOT FOUND'))
-    console.log(chat)
+    // console.log(chat)
     // 找到揪團
     const group = await Group.findById(chat.group_id).orFail(new Error('groupNotFound'))
 
@@ -105,6 +102,7 @@ export const getId = async (req, res) => {
     const result = chat.messages.map((message) => ({
       name: message.user_id.name,
       text: message.text,
+      image: message.user_id.image,
       create_at: message.created_at,
     }))
 
