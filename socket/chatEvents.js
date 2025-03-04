@@ -1,6 +1,6 @@
 export const handleChatEvents = (io, socket) => {
   // 加入聊天室
-  socket.on('join_room', (roomId, user) => {
+  socket.on('join_room', (roomId) => {
     socket.join(roomId)
     console.log(`使用者 ${socket.id} 加入房間 ${roomId}`)
   })

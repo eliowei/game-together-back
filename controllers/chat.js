@@ -17,7 +17,7 @@ export const create = async (req, res) => {
 
     // 檢查揪團聊天室存在
     const groupChat = await Chat.findOne({ group_id })
-    console.log(groupChat)
+    // console.log(groupChat)
     if (groupChat) {
       throw new Error('chatAlreadyExists')
     }
@@ -84,7 +84,9 @@ export const getId = async (req, res) => {
       // 選擇指定欄位
       .select({
         group_id: req.params.id,
-        messages: { $slice: [skip, validLimt] },
+        messages: {
+          $slice: [{ $reverseArray: '$messages' }, skip, validLimt],
+        },
       })
       // 拋出錯誤
       .orFail(new Error('NOT FOUND'))

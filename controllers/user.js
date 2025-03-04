@@ -350,7 +350,7 @@ export const createOrganizerGroup = async (req, res) => {
 
     // 建立揪團
     const result = await Group.create({ ...req.body, organizer_id: organizerId })
-    console.log('建立揪團 ID', result._id)
+    // console.log('建立揪團 ID', result._id)
 
     // 包裝成 { group_id: result._id } 格式，
     const groupEntry = {
@@ -358,7 +358,7 @@ export const createOrganizerGroup = async (req, res) => {
     }
 
     // 更新使用者的主辦揪團紀錄，使用 group._id
-    const updatedUser = await User.findByIdAndUpdate(
+    await User.findByIdAndUpdate(
       organizerId,
       {
         $push: { organize_groups: groupEntry },
@@ -367,8 +367,8 @@ export const createOrganizerGroup = async (req, res) => {
     )
     // 確認 ID 是否正確寫入
     // console.log('新建揪團 ID:', result._id)
-    console.log('新建揪團', result)
-    console.log('更新後的使用者資料:', updatedUser)
+    // console.log('新建揪團', result)
+    // console.log('更新後的使用者資料:', updatedUser)
 
     // 建立聊天室
     await Chat.create({
@@ -510,14 +510,14 @@ export const deleteOrganizerGroup = async (req, res) => {
     )
 
     // 3. 從主辦揪團的 organize_groups 移除此揪團
-    const updatedOrganizer = await User.findByIdAndUpdate(
+    await User.findByIdAndUpdate(
       result.organizer_id,
       {
         $pull: { organize_groups: { group_id: result._id } },
       },
       { new: true },
     )
-    console.log('更新後的主辦者資料', updatedOrganizer)
+    // console.log('更新後的主辦者資料', updatedOrganizer)
 
     // 4.刪除揪團
     await Group.findByIdAndDelete(req.params.id)

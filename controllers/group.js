@@ -25,7 +25,7 @@ export const create = async (req, res) => {
 
     // 建立揪團
     const result = await Group.create({ ...req.body, organizer_id: organizerId })
-    console.log('建立揪團 ID', result._id)
+    // console.log('建立揪團 ID', result._id)
 
     // 包裝成 { group_id: result._id } 格式，
     const groupEntry = {
@@ -33,7 +33,7 @@ export const create = async (req, res) => {
     }
 
     // 更新使用者的主辦揪團紀錄，使用 group._id
-    const updatedUser = await User.findByIdAndUpdate(
+    await User.findByIdAndUpdate(
       organizerId,
       {
         $push: { organize_groups: groupEntry },
@@ -42,8 +42,8 @@ export const create = async (req, res) => {
     )
     // 確認 ID 是否正確寫入
     // console.log('新建揪團 ID:', result._id)
-    console.log('新建揪團', result)
-    console.log('更新後的使用者資料:', updatedUser)
+    // console.log('新建揪團', result)
+    // console.log('更新後的使用者資料:', updatedUser)
 
     // 建立聊天室
     await Chat.create({
@@ -75,7 +75,7 @@ export const create = async (req, res) => {
 export const getAll = async (req, res) => {
   try {
     const searchParams = req.method === 'POST' ? req.body : req.query
-    console.log('搜尋條件：', searchParams)
+    // console.log('搜尋條件：', searchParams)
     const filter = {}
 
     if (searchParams.search) {
@@ -119,9 +119,9 @@ export const getAll = async (req, res) => {
     // 日期搜尋
     else if (searchParams.time) {
       filter.time = new RegExp(searchParams.time, 'i')
-      console.log('搜尋日期：', searchParams.time)
+      // console.log('搜尋日期：', searchParams.time)
     }
-    console.log('最終搜尋條件：', filter)
+    // console.log('最終搜尋條件：', filter)
 
     const result = await Group.find(filter)
       .populate('organizer_id', ['name', 'image'])
@@ -133,13 +133,13 @@ export const getAll = async (req, res) => {
       message: '',
       result,
     })
-    console.log(result)
+    // console.log(result)
 
-    console.log('找到的結果數量：', result.length)
-    console.log(
-      '結果的標籤：',
-      result.map((item) => item.tags),
-    )
+    // console.log('找到的結果數量：', result.length)
+    // console.log(
+    //   '結果的標籤：',
+    //   result.map((item) => item.tags),
+    // )
   } catch (error) {
     console.log(error)
     res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
@@ -485,14 +485,14 @@ export const remove = async (req, res) => {
     )
 
     // 3. 從主辦揪團的 organize_groups 移除此揪團
-    const updatedOrganizer = await User.findByIdAndUpdate(
+    await User.findByIdAndUpdate(
       result.organizer_id,
       {
         $pull: { organize_groups: { group_id: result._id } },
       },
       { new: true },
     )
-    console.log('更新後的主辦者資料', updatedOrganizer)
+    // console.log('更新後的主辦者資料', updatedOrganizer)
 
     // 4.刪除揪團
     await Group.findByIdAndDelete(req.params.id)
