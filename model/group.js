@@ -69,7 +69,7 @@ const Group = new Schema(
     contact_method: {
       type: String,
       enum: {
-        values: ['Line', 'Discord', 'Facebook'],
+        values: ['Line', 'Discord', 'Facebook', '其他'],
         message: 'contactMethodInvalid',
       },
       default: 'Line',
