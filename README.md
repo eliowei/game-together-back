@@ -1,9 +1,9 @@
 # GameTogether 遊戲揪團平台後端
 
-以 Node.js 結合 MongoDB 進行資料儲存與管理
+以 Node.js 透過Express建立伺服器
+結合 MongoDB 進行資料儲存與管理
 
 相關連結: [前端](https://github.com/eliowei/game-together)
-
 
 ## API功能
 - 註冊 & 登入 - 使用者註冊、登入系統
@@ -31,6 +31,7 @@
 | jsonwebtoken | 用於產生和驗證 JWT，實現用戶認證與授權 |
 | passport |　身份驗證中介套件，支援多種認證方式，包括 JWT |
 | CORS | 	處理跨域請求，允許或限制前後端間的資料交換 | 
+| Socket.IO |  即時通訊，處理 WebSocket 連線請求 |
 | Multer | 處理文件上傳，支持多種文件格式和儲存方式 |
 | multer-storage-cloudinary | 擴充 Multer，將上傳的文件儲存至 Cloudinary 雲端 |
 | http-status-codes | 提供 HTTP 狀態碼，讓代碼更具可讀性和清晰性 |
