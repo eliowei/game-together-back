@@ -483,8 +483,13 @@ export const remove = async (req, res) => {
       { 'join_groups.group_id': result._id },
       { $pull: { join_groups: { group_id: result._id } } },
     )
+    // 3. 從參加成員的 favorite_groups 移除此揪團
+    await User.updateMany(
+      { 'favorite_groups.group_id': result._id },
+      { $pull: { favorite_groups: { group_id: result._id } } },
+    )
 
-    // 3. 從主辦揪團的 organize_groups 移除此揪團
+    // 4. 從主辦揪團的 organize_groups 移除此揪團
     await User.findByIdAndUpdate(
       result.organizer_id,
       {
