@@ -2,6 +2,7 @@ import Chat from '../model/chat.js'
 import { StatusCodes } from 'http-status-codes'
 import Group from '../model/group.js'
 import validator from 'validator'
+import { MessagingError } from '../utils/errorHandler.js'
 
 // 建立聊天室
 export const create = async (req, res) => {
@@ -37,27 +38,7 @@ export const create = async (req, res) => {
     })
   } catch (error) {
     console.log(error)
-    if (error.message === 'invalidInput') {
-      res.status(StatusCodes.BAD_REQUEST).json({
-        success: false,
-        message: 'invalidInput',
-      })
-    } else if (error.message === 'groupNotFound') {
-      res.status(StatusCodes.NOT_FOUND).json({
-        success: false,
-        message: 'groupNotFound',
-      })
-    } else if (error.message === 'userNotInGroup') {
-      res.status(StatusCodes.FORBIDDEN).json({
-        success: false,
-        message: 'userNotInGroup',
-      })
-    } else {
-      res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-        success: false,
-        message: 'serverError',
-      })
-    }
+    MessagingError(error, res)
   }
 }
 
@@ -115,27 +96,7 @@ export const getId = async (req, res) => {
     })
   } catch (error) {
     console.log(error)
-    if (error.name === 'CastError' || error.message === 'ID') {
-      res.status(StatusCodes.BAD_REQUEST).json({
-        success: false,
-        message: 'idInvalid',
-      })
-    } else if (error.message === 'NOT FOUND') {
-      res.status(StatusCodes.NOT_FOUND).json({
-        success: false,
-        message: 'notFound',
-      })
-    } else if (error.message === 'userNotInGroup') {
-      res.status(StatusCodes.FORBIDDEN).json({
-        success: false,
-        message: 'userNotInGroup',
-      })
-    } else {
-      res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-        success: false,
-        message: 'serverError',
-      })
-    }
+    MessagingError(error, res)
   }
 }
 
@@ -200,27 +161,7 @@ export const addMessage = async (req, res) => {
     })
   } catch (error) {
     console.log(error)
-    if (error.name === 'CastError' || error.message === 'ID') {
-      res.status(StatusCodes.BAD_REQUEST).json({
-        success: false,
-        message: 'idInvalid',
-      })
-    } else if (error.message === 'NOT FOUND') {
-      res.status(StatusCodes.NOT_FOUND).json({
-        success: false,
-        message: 'notFound',
-      })
-    } else if (error.message === 'userNotInGroup') {
-      res.status(StatusCodes.FORBIDDEN).json({
-        success: false,
-        message: 'userNotInGroup',
-      })
-    } else {
-      res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-        success: false,
-        message: 'serverError',
-      })
-    }
+    MessagingError(error, res)
   }
 }
 
@@ -241,21 +182,6 @@ export const deleteChat = async (req, res) => {
     })
   } catch (error) {
     console.log(error)
-    if (error.name === 'CastError' || error.message === 'ID') {
-      res.status(StatusCodes.BAD_REQUEST).json({
-        success: false,
-        message: 'idInvalid',
-      })
-    } else if (error.message === 'NOT FOUND') {
-      res.status(StatusCodes.NOT_FOUND).json({
-        success: false,
-        message: 'notFound',
-      })
-    } else {
-      res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-        success: false,
-        message: 'serverError',
-      })
-    }
+    MessagingError(error, res)
   }
 }

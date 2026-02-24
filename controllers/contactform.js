@@ -1,6 +1,7 @@
 import { StatusCodes } from 'http-status-codes'
 import ContactForm from '../model/contactform.js'
 import validator from 'validator'
+import { MessagingError } from '../utils/errorHandler.js'
 
 export const createForm = async (req, res) => {
   try {
@@ -22,17 +23,7 @@ export const createForm = async (req, res) => {
     })
   } catch (error) {
     console.log(error)
-    if (error.message === 'invalidInput') {
-      res.status(StatusCodes.BAD_REQUEST).json({
-        success: false,
-        message: 'invalidInput',
-      })
-    } else {
-      res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-        success: false,
-        message: 'serverError',
-      })
-    }
+    MessagingError(error, res)
   }
 }
 
@@ -46,10 +37,7 @@ export const getAllForm = async (req, res) => {
     })
   } catch (error) {
     console.log(error)
-    res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-      success: false,
-      message: 'serverError',
-    })
+    MessagingError(error, res)
   }
 }
 
@@ -67,22 +55,7 @@ export const getForm = async (req, res) => {
     })
   } catch (error) {
     console.log(error)
-    if (error.name === 'CastError' || error.message === 'ID') {
-      res.status(StatusCodes.BAD_REQUEST).json({
-        success: false,
-        message: 'idInvalid',
-      })
-    } else if (error.message === 'formNotFound') {
-      res.status(StatusCodes.NOT_FOUND).json({
-        success: false,
-        message: 'formNotFound',
-      })
-    } else {
-      res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-        success: false,
-        message: 'serverError',
-      })
-    }
+    MessagingError(error, res)
   }
 }
 
@@ -99,21 +72,6 @@ export const deleteForm = async (req, res) => {
     })
   } catch (error) {
     console.log(error)
-    if (error.name === 'CastError' || error.message === 'ID') {
-      res.status(StatusCodes.BAD_REQUEST).json({
-        success: false,
-        message: 'idInvalid',
-      })
-    } else if (error.message === 'formNotFound') {
-      res.status(StatusCodes.NOT_FOUND).json({
-        success: false,
-        message: 'formNotFound',
-      })
-    } else {
-      res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-        success: false,
-        message: 'serverError',
-      })
-    }
+    MessagingError(error, res)
   }
 }

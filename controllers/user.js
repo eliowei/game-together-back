@@ -5,6 +5,7 @@ import Group from '../model/group.js'
 import validator from 'validator'
 import Chat from '../model/chat.js'
 import bcrypt from 'bcrypt'
+import { MessagingError } from '../utils/errorHandler.js'
 
 // 註冊
 export const create = async (req, res) => {
@@ -17,23 +18,7 @@ export const create = async (req, res) => {
     })
   } catch (error) {
     console.log(error)
-    if (error.name == 'MongoServerError' && error.code === 11000) {
-      res.status(StatusCodes.CONFLICT).json({
-        success: false,
-        message: 'userAccountDuplicate',
-      })
-    } else if (error.name === 'ValidationError') {
-      const key = Object.keys(error.errors)[0]
-      res.status(StatusCodes.BAD_REQUEST).json({
-        success: false,
-        message: error.errors[key].message,
-      })
-    } else {
-      res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-        success: false,
-        message: 'serverError',
-      })
-    }
+    MessagingError(error, res)
   }
 }
 
@@ -63,10 +48,7 @@ export const login = async (req, res) => {
     })
   } catch (error) {
     console.log(error)
-    res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-      success: false,
-      message: 'serverError',
-    })
+    MessagingError(error, res)
   }
 }
 
@@ -116,24 +98,7 @@ export const editProfile = async (req, res) => {
     })
   } catch (error) {
     console.log(error)
-
-    if (error.message === 'NOT FOUND') {
-      res.status(StatusCodes.NOT_FOUND).json({
-        success: false,
-        message: 'notFound',
-      })
-    } else if (error.name === 'ValidationError') {
-      const key = Object.keys(error.errors)[0]
-      res.status(StatusCodes.BAD_REQUEST).json({
-        success: false,
-        message: error.errors[key].message,
-      })
-    } else {
-      res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-        success: false,
-        message: 'serverError',
-      })
-    }
+    MessagingError(error, res)
   }
 }
 
@@ -167,33 +132,7 @@ export const edit = async (req, res) => {
     })
   } catch (error) {
     console.log(error)
-    if (error.name === 'CastError' || error.message === 'ID') {
-      res.status(StatusCodes.BAD_REQUEST).json({
-        sucess: false,
-        message: 'idInvalid',
-      })
-    } else if (error.message === 'NOT FOUND') {
-      res.status(StatusCodes.NOT_FOUND).json({
-        success: false,
-        message: 'notFound',
-      })
-    } else if (error.message === 'SAME PASSWORD') {
-      res.status(StatusCodes.BAD_REQUEST).json({
-        success: false,
-        message: 'samePassword',
-      })
-    } else if (error.name === 'ValidationError') {
-      const key = Object.keys(error.errors)[0]
-      res.status(StatusCodes.BAD_REQUEST).json({
-        success: false,
-        message: error.errors[key].message,
-      })
-    } else {
-      res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-        success: false,
-        message: 'serverError',
-      })
-    }
+    MessagingError(error, res)
   }
 }
 
@@ -211,10 +150,7 @@ export const refresh = async (req, res) => {
     })
   } catch (error) {
     console.log(error)
-    res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-      success: false,
-      message: 'serverError',
-    })
+    MessagingError(error, res)
   }
 }
 
@@ -230,10 +166,7 @@ export const logout = async (req, res) => {
     })
   } catch (error) {
     console.log(error)
-    res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-      success: false,
-      message: 'serverError',
-    })
+    MessagingError(error, res)
   }
 }
 
@@ -248,10 +181,7 @@ export const getAll = async (req, res) => {
     })
   } catch (error) {
     console.log(error)
-    res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-      success: false,
-      message: 'serverError',
-    })
+    MessagingError(error, res)
   }
 }
 
@@ -306,28 +236,7 @@ export const remove = async (req, res) => {
     })
   } catch (error) {
     console.log(error)
-
-    if (error.name === 'CastError' || error.message === 'ID') {
-      res.status(StatusCodes.BAD_REQUEST).json({
-        sucess: false,
-        message: 'idInvalid',
-      })
-    } else if (error.message === 'NOT FOUND') {
-      res.status(StatusCodes.NOT_FOUND).json({
-        success: false,
-        message: 'notFound',
-      })
-    } else if (error.message === 'NOT ORGANIZER') {
-      res.status(StatusCodes.FORBIDDEN).json({
-        sucess: false,
-        message: 'notOrganizer',
-      })
-    } else {
-      res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-        success: false,
-        message: 'serverError',
-      })
-    }
+    MessagingError(error, res)
   }
 }
 
@@ -382,18 +291,7 @@ export const createOrganizerGroup = async (req, res) => {
     })
   } catch (error) {
     console.log(error)
-    if (error.name === 'ValidationError') {
-      const key = Object.keys(error.errors)[0]
-      res.status(StatusCodes.BAD_REQUEST).json({
-        success: false,
-        message: error.errors[key].message,
-      })
-    } else {
-      res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-        success: false,
-        message: 'serverError',
-      })
-    }
+    MessagingError(error, res)
   }
 }
 
@@ -417,17 +315,7 @@ export const getOrganizerGroup = async (req, res) => {
     })
   } catch (error) {
     console.log(error)
-    if (error.message === 'NOT FOUND') {
-      res.status(StatusCodes.NOT_FOUND).json({
-        success: false,
-        message: 'notFound',
-      })
-    } else {
-      res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-        success: false,
-        message: 'serverError',
-      })
-    }
+    MessagingError(error, res)
   }
 }
 
@@ -461,34 +349,7 @@ export const editOrganizerGroup = async (req, res) => {
     })
   } catch (error) {
     console.log(error)
-
-    if (error.name === 'CastError' || error.message === 'ID') {
-      res.status(StatusCodes.BAD_REQUEST).json({
-        success: false,
-        message: 'idInvalid',
-      })
-    } else if (error.message === 'NOT FOUND') {
-      res.status(StatusCodes.NOT_FOUND).json({
-        success: false,
-        message: 'notFound',
-      })
-    } else if (error.message === 'NOT ORGANIZER') {
-      res.status(StatusCodes.FORBIDDEN).json({
-        success: false,
-        message: 'notOrganizer',
-      })
-    } else if (error.name === 'ValidationError') {
-      const key = Object.keys(error.errors)[0]
-      res.status(StatusCodes.BAD_REQUEST).json({
-        success: false,
-        message: error.errors[key].message,
-      })
-    } else {
-      res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-        success: false,
-        message: 'serverError',
-      })
-    }
+    MessagingError(error, res)
   }
 }
 
@@ -532,28 +393,7 @@ export const deleteOrganizerGroup = async (req, res) => {
     })
   } catch (error) {
     console.log(error)
-
-    if (error.name === 'CastError' || error.message === 'ID') {
-      res.status(StatusCodes.BAD_REQUEST).json({
-        sucess: false,
-        message: 'idInvalid',
-      })
-    } else if (error.message === 'NOT FOUND') {
-      res.status(StatusCodes.NOT_FOUND).json({
-        success: false,
-        message: 'notFound',
-      })
-    } else if (error.message === 'NOT ORGANIZER') {
-      res.status(StatusCodes.FORBIDDEN).json({
-        sucess: false,
-        message: 'notOrganizer',
-      })
-    } else {
-      res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-        success: false,
-        message: 'serverError',
-      })
-    }
+    MessagingError(error, res)
   }
 }
 // 主辦者踢除揪團成員
@@ -599,32 +439,7 @@ export const kickOrganizerGroup = async (req, res) => {
     })
   } catch (error) {
     console.log(error)
-    if (error.name === 'CastError' || error.message === 'ID') {
-      res.status(StatusCodes.BAD_REQUEST).json({
-        success: false,
-        message: 'idInvalid',
-      })
-    } else if (error.message === 'NOT FOUND') {
-      res.status(StatusCodes.NOT_FOUND).json({
-        success: false,
-        message: 'notFound',
-      })
-    } else if (error.message === 'NOT ORGANIZER') {
-      res.status(StatusCodes.FORBIDDEN).json({
-        success: false,
-        message: 'notOrganizer',
-      })
-    } else if (error.message === 'NOT MEMBER') {
-      res.status(StatusCodes.BAD_REQUEST).json({
-        success: false,
-        message: 'notMember',
-      })
-    } else {
-      res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-        success: false,
-        message: 'serverError',
-      })
-    }
+    MessagingError(error, res)
   }
 }
 
@@ -651,17 +466,7 @@ export const getJoinGroup = async (req, res) => {
     })
   } catch (error) {
     console.log(error)
-    if (error.message === 'NOT FOUND') {
-      res.status(StatusCodes.NOT_FOUND).json({
-        success: false,
-        message: 'notFound',
-      })
-    } else {
-      res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-        success: false,
-        message: 'serverError',
-      })
-    }
+    MessagingError(error, res)
   }
 }
 
@@ -677,7 +482,7 @@ export const updateJoinGroup = async (req, res) => {
 
     // 3. 檢查是否為主辦者
     if (group.organizer_id.toString() === req.user._id.toString()) {
-      throw new Error('IS ORGANIZER')
+      throw new Error('ALREADY ORGANIZER')
     }
 
     // 4. 檢查是否已加入
@@ -712,43 +517,7 @@ export const updateJoinGroup = async (req, res) => {
     })
   } catch (error) {
     console.log(error)
-    if (error.name === 'CastError' || error.message === 'ID') {
-      res.status(StatusCodes.NOT_FOUND).json({
-        success: false,
-        message: 'idInvalid',
-      })
-    } else if (error.message === 'NOT FOUND') {
-      res.status(StatusCodes.BAD_REQUEST).json({
-        success: false,
-        message: 'notFound',
-      })
-    } else if (error.message === 'IS ORGANIZER') {
-      res.status(StatusCodes.BAD_REQUEST).json({
-        success: false,
-        message: 'alreadyOrganized',
-      })
-    } else if (error.name === 'ALREADY JOINED') {
-      return res.status(StatusCodes.BAD_REQUEST).json({
-        success: false,
-        message: 'alreadyJoined',
-      })
-    } else if (error.name === 'ValidationError') {
-      const key = Object.keys(error.errors)[0]
-      res.status(StatusCodes.BAD_REQUEST).json({
-        success: false,
-        message: error.errors[key].message,
-      })
-    } else if (error.name === 'GROUP FULL') {
-      res.status(StatusCodes.BAD_REQUEST).json({
-        success: false,
-        message: 'groupFull',
-      })
-    } else {
-      res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-        success: false,
-        message: 'serverError',
-      })
-    }
+    MessagingError(error, res)
   }
 }
 
@@ -766,7 +535,7 @@ export const deleteJoinGroup = async (req, res) => {
 
     // 3. 檢查是否為主辦者
     if (group.organizer_id.toString() === req.user._id.toString()) {
-      throw new Error('IS ORGANIZER')
+      throw new Error('ALREADY ORGANIZER')
     }
 
     // 4. 檢查是否已加入
@@ -797,43 +566,7 @@ export const deleteJoinGroup = async (req, res) => {
     })
   } catch (error) {
     console.log(error)
-    if (error.name === 'CastError' || error.message === 'ID') {
-      res.status(StatusCodes.NOT_FOUND).json({
-        success: false,
-        message: 'idInvalid',
-      })
-    } else if (error.message === 'NOT FOUND') {
-      res.status(StatusCodes.BAD_REQUEST).json({
-        success: false,
-        message: 'notFound',
-      })
-    } else if (error.message === 'IS ORGANIZER') {
-      res.status(StatusCodes.BAD_REQUEST).json({
-        success: false,
-        message: 'alreadyOrganized',
-      })
-    } else if (error.name === 'ALREADY JOINED') {
-      return res.status(StatusCodes.BAD_REQUEST).json({
-        success: false,
-        message: 'alreadyJoined',
-      })
-    } else if (error.name === 'ValidationError') {
-      const key = Object.keys(error.errors)[0]
-      res.status(StatusCodes.BAD_REQUEST).json({
-        success: false,
-        message: error.errors[key].message,
-      })
-    } else if (error.name === 'GROUP FULL') {
-      res.status(StatusCodes.BAD_REQUEST).json({
-        success: false,
-        message: 'groupFull',
-      })
-    } else {
-      res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-        success: false,
-        message: 'serverError',
-      })
-    }
+    MessagingError(error, res)
   }
 }
 
@@ -858,17 +591,7 @@ export const getFavoriteGroup = async (req, res) => {
     })
   } catch (error) {
     console.log(error)
-    if (error.message === 'NOT FOUND') {
-      res.status(StatusCodes.NOT_FOUND).json({
-        success: false,
-        message: 'notFound',
-      })
-    } else {
-      res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-        success: false,
-        message: 'serverError',
-      })
-    }
+    MessagingError(error, res)
   }
 }
 
@@ -900,27 +623,7 @@ export const addFavoriteGroup = async (req, res) => {
     })
   } catch (error) {
     console.log(error)
-    if (error.name === 'CastError' || error.message === 'ID') {
-      res.status(StatusCodes.NOT_FOUND).json({
-        success: false,
-        message: 'idInvalid',
-      })
-    } else if (error.message === 'NOT FOUND') {
-      res.status(StatusCodes.BAD_REQUEST).json({
-        success: false,
-        message: 'notFound',
-      })
-    } else if (error.name === 'ALREADY FAVORITE') {
-      res.status(StatusCodes.BAD_REQUEST).json({
-        success: false,
-        message: 'alreadyFavorite',
-      })
-    } else {
-      res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-        success: false,
-        message: 'serverError',
-      })
-    }
+    MessagingError(error, res)
   }
 }
 
@@ -955,26 +658,6 @@ export const deleteFavoriteGroup = async (req, res) => {
     })
   } catch (error) {
     console.log(error)
-    if (error.name === 'CastError' || error.message === 'ID') {
-      res.status(StatusCodes.NOT_FOUND).json({
-        success: false,
-        message: 'idInvalid',
-      })
-    } else if (error.message === 'NOT FOUND') {
-      res.status(StatusCodes.BAD_REQUEST).json({
-        success: false,
-        message: 'notFound',
-      })
-    } else if (error.name === 'ALREADY FAVORITE') {
-      res.status(StatusCodes.BAD_REQUEST).json({
-        success: false,
-        message: 'alreadyFavorite',
-      })
-    } else {
-      res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-        success: false,
-        message: 'serverError',
-      })
-    }
+    MessagingError(error, res)
   }
 }

@@ -4,6 +4,7 @@ import validator from 'validator'
 import User from '../model/user.js'
 import Chat from '../model/chat.js'
 import { getCityKey } from '../utils/cityMapping.js'
+import { MessagingError } from '../utils/errorHandler.js'
 
 export const create = async (req, res) => {
   try {
@@ -25,7 +26,6 @@ export const create = async (req, res) => {
 
     // 建立揪團
     const result = await Group.create({ ...req.body, organizer_id: organizerId })
-    // console.log('建立揪團 ID', result._id)
 
     // 包裝成 { group_id: result._id } 格式，
     const groupEntry = {
@@ -40,11 +40,6 @@ export const create = async (req, res) => {
       },
       { new: true },
     )
-    // 確認 ID 是否正確寫入
-    // console.log('新建揪團 ID:', result._id)
-    // console.log('新建揪團', result)
-    // console.log('更新後的使用者資料:', updatedUser)
-
     // 建立聊天室
     await Chat.create({
       group_id: result._id,
@@ -57,25 +52,13 @@ export const create = async (req, res) => {
     })
   } catch (error) {
     console.log(error)
-    if (error.name === 'ValidationError') {
-      const key = Object.keys(error.errors)[0]
-      res.status(StatusCodes.BAD_REQUEST).json({
-        success: false,
-        message: error.errors[key].message,
-      })
-    } else {
-      res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-        success: false,
-        message: 'serverError',
-      })
-    }
+    MessagingError(error, res)
   }
 }
 
 export const getAll = async (req, res) => {
   try {
     const searchParams = req.method === 'POST' ? req.body : req.query
-    // console.log('搜尋條件：', searchParams)
     const filter = {}
 
     if (searchParams.search) {
@@ -119,9 +102,7 @@ export const getAll = async (req, res) => {
     // 日期搜尋
     else if (searchParams.time) {
       filter.time = new RegExp(searchParams.time, 'i')
-      // console.log('搜尋日期：', searchParams.time)
     }
-    // console.log('最終搜尋條件：', filter)
 
     const result = await Group.find(filter)
       .populate('organizer_id', ['name', 'image'])
@@ -133,19 +114,9 @@ export const getAll = async (req, res) => {
       message: '',
       result,
     })
-    // console.log(result)
-
-    // console.log('找到的結果數量：', result.length)
-    // console.log(
-    //   '結果的標籤：',
-    //   result.map((item) => item.tags),
-    // )
   } catch (error) {
     console.log(error)
-    res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-      success: false,
-      message: 'serverError',
-    })
+    MessagingError(error, res)
   }
 }
 
@@ -169,22 +140,7 @@ export const getId = async (req, res) => {
     })
   } catch (error) {
     console.log(error)
-    if (error.name === 'CastError' || error.message === 'ID') {
-      res.status(StatusCodes.BAD_REQUEST).json({
-        success: false,
-        message: 'idInvalid',
-      })
-    } else if (error.message === 'NOT FOUND') {
-      res.status(StatusCodes.NOT_FOUND).json({
-        success: false,
-        message: 'notFound',
-      })
-    } else {
-      res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-        success: false,
-        message: 'serverError',
-      })
-    }
+    MessagingError(error, res)
   }
 }
 
@@ -218,28 +174,7 @@ export const addComment = async (req, res) => {
     })
   } catch (error) {
     console.log(error)
-    if (error.name === 'CastError' || error.message === 'ID') {
-      res.status(StatusCodes.BAD_REQUEST).json({
-        success: false,
-        message: 'idInvalid',
-      })
-    } else if (error.message === 'NOT FOUND') {
-      res.status(StatusCodes.NOT_FOUND).json({
-        success: false,
-        message: 'notFound',
-      })
-    } else if (error.name === 'ValidationError') {
-      const key = Object.keys(error.errors)[0]
-      res.status(StatusCodes.BAD_REQUEST).json({
-        success: false,
-        message: error.errors[key].message,
-      })
-    } else {
-      res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-        success: false,
-        message: 'serverError',
-      })
-    }
+    MessagingError(error, res)
   }
 }
 
@@ -280,28 +215,7 @@ export const replyComment = async (req, res) => {
       result: result.comments[result.comments.length - 1],
     })
   } catch (error) {
-    if (error.name === 'CastError' || error.message === 'ID') {
-      res.status(StatusCodes.BAD_REQUEST).json({
-        success: false,
-        message: 'idInvalid',
-      })
-    } else if (error.message === 'NOT FOUND') {
-      res.status(StatusCodes.NOT_FOUND).json({
-        success: false,
-        message: 'notFound',
-      })
-    } else if (error.name === 'ValidationError') {
-      const key = Object.keys(error.errors)[0]
-      res.status(StatusCodes.BAD_REQUEST).json({
-        success: false,
-        message: error.errors[key].message,
-      })
-    } else {
-      res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-        success: false,
-        message: 'serverError',
-      })
-    }
+    MessagingError(error, res)
   }
 }
 
@@ -343,32 +257,7 @@ export const removeReplyComment = async (req, res) => {
     })
   } catch (error) {
     console.log(error)
-    if (error.name === 'CastError' || error.message === 'ID') {
-      res.status(StatusCodes.BAD_REQUEST).json({
-        success: false,
-        message: 'idInvalid',
-      })
-    } else if (error.message === 'NOT FOUND') {
-      res.status(StatusCodes.NOT_FOUND).json({
-        success: false,
-        message: 'notFound',
-      })
-    } else if (error.message === 'NOT ORGANIZER') {
-      res.status(StatusCodes.FORBIDDEN).json({
-        success: false,
-        message: 'notOrganizer',
-      })
-    } else if (error.message === 'NOT FOUND REPLY') {
-      res.status(StatusCodes.NOT_FOUND).json({
-        success: false,
-        message: 'notFoundReply',
-      })
-    } else {
-      res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-        success: false,
-        message: 'serverError',
-      })
-    }
+    MessagingError(error, res)
   }
 }
 
@@ -403,27 +292,7 @@ export const removeComment = async (req, res) => {
     })
   } catch (error) {
     console.log(error)
-    if (error.name === 'CastError' || error.message === 'ID') {
-      res.status(StatusCodes.BAD_REQUEST).json({
-        success: false,
-        message: 'idInvalid',
-      })
-    } else if (error.message === 'NOT FOUND') {
-      res.status(StatusCodes.NOT_FOUND).json({
-        success: false,
-        message: 'notFound',
-      })
-    } else if (error.message === 'NOT ORGANIZER') {
-      res.status(StatusCodes.FORBIDDEN).json({
-        success: false,
-        message: 'notOrganizer',
-      })
-    } else {
-      res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-        success: false,
-        message: 'serverError',
-      })
-    }
+    MessagingError(error, res)
   }
 }
 
@@ -445,29 +314,7 @@ export const edit = async (req, res) => {
     })
   } catch (error) {
     console.log(error)
-
-    if (error.name === 'CastError' || error.message === 'ID') {
-      res.status(StatusCodes.BAD_REQUEST).json({
-        success: false,
-        message: 'idInvalid',
-      })
-    } else if (error.message === 'NOT FOUND') {
-      res.status(StatusCodes.NOT_FOUND).json({
-        success: false,
-        message: 'notFound',
-      })
-    } else if (error.name === 'ValidationError') {
-      const key = Object.keys(error.errors)[0]
-      res.status(StatusCodes.BAD_REQUEST).json({
-        success: false,
-        message: error.errors[key].message,
-      })
-    } else {
-      res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-        success: false,
-        message: 'serverError',
-      })
-    }
+    MessagingError(error, res)
   }
 }
 
@@ -512,27 +359,6 @@ export const remove = async (req, res) => {
     })
   } catch (error) {
     console.log(error)
-
-    if (error.name === 'CastError' || error.message === 'ID') {
-      res.status(StatusCodes.BAD_REQUEST).json({
-        sucess: false,
-        message: 'idInvalid',
-      })
-    } else if (error.message === 'NOT FOUND') {
-      res.status(StatusCodes.NOT_FOUND).json({
-        success: false,
-        message: 'notFound',
-      })
-    } else if (error.message === 'NOT ORGANIZER') {
-      res.status(StatusCodes.FORBIDDEN).json({
-        sucess: false,
-        message: 'notOrganizer',
-      })
-    } else {
-      res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-        success: false,
-        message: 'serverError',
-      })
-    }
+    MessagingError(error, res)
   }
 }
